@@ -7,7 +7,7 @@ import subprocess
 
 from ghapi.all import GhApi
 from pathlib import Path
-from swesmith.constants import MAP_REPO_TO_SPECS, ORG_NAME
+from swesmith.constants import MAP_REPO_TO_SPECS, ORG_NAME, LOG_DIR_ENV_RECORDS
 
 
 def get_arch_and_platform() -> tuple[str, str]:
@@ -57,7 +57,7 @@ def get_env_yml_path(repo: str, commit: str) -> str:
         raise ValueError(
             f"Must provide full commit hash, not partial commit ({commit})"
         )
-    return f"swesmith/build_repo/envs/sweenv_{repo.replace('/', '__')}_{commit}.yml"
+    return f"{LOG_DIR_ENV_RECORDS}/sweenv_{repo.replace('/', '__')}_{commit}.yml"
 
 
 def get_full_commit(repo, partial_commit) -> str:
@@ -73,18 +73,18 @@ def get_full_commit(repo, partial_commit) -> str:
 
 def get_repo_name(repo, commit) -> str:
     """
-    Get the SWE-FT GitHub repository name for a repository at a specific commit.
+    Get the SWE-smith GitHub repository name for a repository at a specific commit.
     """
     return f"{repo.replace('/', '__')}.{commit[:8]}"
 
 
-def clone_repo(repo: str, dest: str | None = None) -> str | None:
+def clone_repo(repo: str, dest: str | None = None, org: str = ORG_NAME) -> str | None:
     """Clone a repository from GitHub."""
     if not os.path.exists(dest or repo):
         clone_cmd = (
-            f"git clone git@github.com:{ORG_NAME}/{repo}.git"
+            f"git clone git@github.com:{org}/{repo}.git"
             if dest is None
-            else f"git clone git@github.com:{ORG_NAME}/{repo}.git {dest}"
+            else f"git clone git@github.com:{org}/{repo}.git {dest}"
         )
         subprocess.run(
             clone_cmd,

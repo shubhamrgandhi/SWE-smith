@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="http://swe-bench.github.io">
+  <a href="https://swesmith.com/">
     <img src="docs/assets/banner.png" style="height: 10em" alt="Kawhi the SWE-smith" />
   </a>
 </p>
@@ -28,33 +28,51 @@ SWE-smith is a toolkit for training software engineering (SWE) agents. With SWE-
 * *Generate trajectories* of [SWE-agent](https://github.com/SWE-agent/SWE-agent) solving those task instances.
 * *Train local LMs* on these trajectories to improve their software engineering capabilities ([SWE-agent-LM-32B](https://huggingface.co/SWE-bench/SWE-agent-LM-32B)).
 
-### 🚀 Get Started
-Check out the [documentation]() for a complete guide on how to use SWE-smith, including how to
-* [Install]() the repository locally or as a PyPI package.
-* [Create Task Instances]() for any Python repository with SWE-smith.
-* Use your task instance to [train your own SWE-agents]()
+## 🚀 Get Started
+Check out the [documentation](https://swesmith.com/getting_started/) for a complete guide on how to use SWE-smith, including how to
+* [Install](https://swesmith.com/getting_started/installation/) the repository locally or as a PyPI package.
+* [Create Task Instances](https://swesmith.com/guides/create_instances/) for any Python repository with SWE-smith.
+* Use your task instance to [train your own SWE-agents](https://swesmith.com/guides/train_swe_agent/)
 
-### 💿 Resources
+## 🏎️ Quick Start
+Install the repo:
+```bash
+git clone https://github.com/SWE-bench/SWE-smith
+cd SWE-smith
+conda create -n smith python=3.10;
+conda activate smith;
+pip install -e .
+```
+
+Then, check out `scripts/cheatsheet.sh` for scripts to (1) create execution environments, (2) create task instances, and (3) train SWE-agents.
+
+> [!TIP]
+> SWE-smith requires Docker to create execution environments. SWE-smith was developed and tested on Ubuntu 22.04.4 LTS.
+> We do *not* plan on supporting Windows or MacOS.
+
+## 💿 Resources
 In addition to this toolkit, we've also provided several artifacts on the [SWE-bench HuggingFace](https://huggingface.co/SWE-bench), including:
 * [50k Python Task Instances](https://huggingface.co/datasets/SWE-bench/SWE-smith), created using SWE-smith.
-* [SWE-agent-LM-32B](https://huggingface.co/SWE-bench/SWE-agent-LM-32B), trained using SWE-smith. Achieves **40.2%** pass@1 on [SWE-bench Verified](https://huggingface.co/datasets/SWE-bench/SWE-bench_Verified)!
+* [SWE-agent-LM-32B](https://huggingface.co/SWE-bench/SWE-agent-LM-32B), trained using SWE-smith. Achieves **41.6%** pass@1 on [SWE-bench Verified](https://huggingface.co/datasets/SWE-bench/SWE-bench_Verified)!
 * [5k Trajectories](https://huggingface.co/datasets/SWE-bench/SWE-smith-trajectories) that SWE-agent-LM-32B was trained on.
 
 And there's more coming!
 
-### 💫 Contributions
+## 💫 Contributions
 Excited about SWE-smith? We're actively working on several follow ups, and love meaningful collaborations! What we're thinking about...
 * Make SWE-smith work for non-Python languages
 * New bug generation techniques
-* Train SWE-agents with more 
+* Train SWE-agents with more trajectories and new methods
+
+Check out the [Contributing Guide](CONTRIBUTING.md) for more.
 
 Contact Person: [John Yang](https://john-b-yang.github.io/), [Kilian Lieret](https://github.com/klieret/)
 (Email: [johnby@stanford.edu](mailto:johnby@stanford.edu))
 
-### 🪪 License
+## 🪪 License
 MIT. Check `LICENSE` for more information.
 
-### ✍️ Citation
+## ✍️ Citation
 
 ```bibtex
 @misc{yang2025swesmith,
@@ -68,7 +86,7 @@ MIT. Check `LICENSE` for more information.
 }
 ```
 
-### 📕 Related Works
+## 📕 Related Works
 <div align="center">
   <a href="https://github.com/SWE-bench/SWE-bench"><img src="docs/assets/swebench_logo_text_below.svg" alt="SWE-bench" height="120px"></a>
   &nbsp;&nbsp;
