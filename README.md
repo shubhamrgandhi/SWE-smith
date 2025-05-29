@@ -66,7 +66,7 @@ Excited about SWE-smith? We're actively working on several follow ups, and love 
 
 Check out the [Contributing Guide](CONTRIBUTING.md) for more.
 
-Contact Person: [John Yang](https://john-b-yang.github.io/), [Kilian Lieret](https://github.com/klieret/)
+Contact Person: [John Yang](https://john-b-yang.github.io/), [Kilian Lieret](https://lieret.net)
 (Email: [johnby@stanford.edu](mailto:johnby@stanford.edu))
 
 ## 🪪 License
