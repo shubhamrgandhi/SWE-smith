@@ -39,7 +39,6 @@ def main(
     repo: str,
     install_script: str,
     commit: str,
-    python_version: str,
     no_cleanup: bool,
     force: bool,
 ):
@@ -88,19 +87,9 @@ def main(
         ):
             raise Exception("(No Error) Terminating")
 
-        # Construct installation script
-        installation_cmds = [
-            ". /opt/miniconda3/bin/activate",
-            f"conda create -n {ENV_NAME} python={python_version} -yq",
-            f"conda activate {ENV_NAME}",
-            f". {install_script}",
-        ]
-
         # Run installation
         print("> Installing repo...")
-        temp = "\n" + "\n- ".join(installation_cmds)
-        print(f"> Script:{temp}\n")
-        subprocess.run(" && ".join(installation_cmds), check=True, shell=True)
+        subprocess.run(f". {install_script}", check=True, shell=True)
         print("> Successfully installed repo")
 
         # If installation succeeded, export the conda environment + record install script
@@ -138,7 +127,6 @@ def main(
                         f"git clone git@github.com:{repo}.git",
                         f"git checkout {commit}",
                     ]
-                    + installation_cmds[:3]
                     + [
                         l.strip("\n")
                         for l in open(install_script).readlines()
@@ -170,12 +158,6 @@ if __name__ == "__main__":
         type=str,
         help="Commit hash to build the image at (default: latest)",
         default="latest",
-    )
-    parser.add_argument(
-        "--python_version",
-        type=str,
-        help="Python version to use for the environment",
-        default="3.10",
     )
     parser.add_argument(
         "--no_cleanup",

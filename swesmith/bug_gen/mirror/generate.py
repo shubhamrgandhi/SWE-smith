@@ -12,14 +12,14 @@ import logging
 import os
 import re
 import shutil
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from multiprocessing import current_process
 import uuid
 import traceback
 import signal
 
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dotenv import load_dotenv
 from litellm import completion, completion_cost
+from multiprocessing import current_process
 from swebench.harness.constants import KEY_INSTANCE_ID
 from swesmith.bug_gen.utils import (
     apply_patches,
