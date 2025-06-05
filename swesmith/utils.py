@@ -5,9 +5,85 @@ import random
 import string
 import subprocess
 
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from ghapi.all import GhApi
 from pathlib import Path
 from swesmith.constants import MAP_REPO_TO_SPECS, ORG_NAME, LOG_DIR_ENV_RECORDS
+from typing import Any
+
+
+class BugRewrite:
+    cost: float = 0
+    explanation: str = ""
+    output: str
+    rewrite: str
+    strategy: str
+
+    def __init__(
+        self,
+        rewrite: str,
+        explanation: str,
+        strategy: str,
+        cost: float = 0,
+        output: str = "",
+    ):
+        self.rewrite = rewrite
+        self.explanation = explanation
+        self.cost = cost
+        self.strategy = strategy
+        self.output = output
+
+    def get_hash(self) -> str:
+        """Generates a hash for the bug rewrite."""
+        return generate_hash(self.rewrite)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Converts the bug rewrite to a dictionary."""
+        return {
+            "cost": self.cost,
+            "explanation": self.explanation,
+            "output": self.output,
+            "rewrite": self.rewrite,
+            "strategy": self.strategy,
+        }
+
+
+@dataclass
+class CodeEntity(ABC):
+    """Data class to hold information about a code entity (e.g. function, class)."""
+
+    file_path: str
+    indent_level: int
+    indent_size: int
+    line_end: int
+    line_start: int
+    node: Any
+    src_code: Any
+
+    @property
+    def ext(self) -> str:
+        if isinstance(self.file_path, Path):
+            self.file_path = str(self.file_path)
+        return self.file_path.rsplit(".", 1)[-1].lower()
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Get the name of the code entity."""
+        pass
+
+    @property
+    @abstractmethod
+    def signature(self) -> str:
+        """Get the signature of the code entity."""
+        pass
+
+    @property
+    @abstractmethod
+    def stub(self) -> str:
+        """Get stub (code with implementation removed) for the code entity."""
+        pass
 
 
 def get_arch_and_platform() -> tuple[str, str]:
@@ -124,7 +200,7 @@ def get_test_paths(dir_path: str, ext: str = ".py") -> list[Path]:
     ]
 
 
-def does_repo_exist(repo: str) -> bool:
+def repo_exists(repo: str, org_name: str = ORG_NAME) -> bool:
     """
     Check if a repository exists in project organization.
     """
@@ -133,6 +209,6 @@ def does_repo_exist(repo: str) -> bool:
     org_repos = [
         x["name"]
         for page in range(1, 3)
-        for x in api.repos.list_for_org(ORG_NAME, per_page=100, page=page)  # type: ignore
+        for x in api.repos.list_for_org(org_name, per_page=100, page=page)  # type: ignore
     ]
     return repo in org_repos
