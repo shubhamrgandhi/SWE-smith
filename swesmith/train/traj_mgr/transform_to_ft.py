@@ -93,65 +93,40 @@ def main(
 
 
 if __name__ == "__main__":
-    if False:
-        arg_parser = argparse.ArgumentParser(
-            description="Transform SWE-agent trajectories to fine-tuning format"
-        )
-        arg_parser.add_argument(
-            "--traj_dir",
-            type=str,
-            required=True,
-            help="Path to folder containing SWE-agent trajectories",
-        )
-        arg_parser.add_argument(
-            "--eval_dir",
-            type=str,
-            required=True,
-            help="Path to folder containing evaluation results",
-        )
-        arg_parser.add_argument(
-            "--style",
-            type=str,
-            required=False,
-            default="xml",
-            help="Style of the trajectories",
-        )
-        arg_parser.add_argument(
-            "--only_resolved",
-            action="store_true",
-            required=False,
-            help="Only keep trajectories for resolved instances",
-        )
-        arg_parser.add_argument(
-            "--out_path",
-            type=str,
-            required=False,
-            default=".",
-            help="Path to output directory",
-        )
-        args = arg_parser.parse_args()
-        main(**vars(args))
-
-    USER = "john-b-yang"
-    TRAJS_EXP_PREFIX = "swesmith_gen_"
-    PATH_TO_TRAJS = f"trajectories/{USER}/"
-    PATH_TO_EVAL_DIR = f"/home/{USER}/swe-smith/logs/run_evaluation/"
-
-    for run_id in sorted(os.listdir(PATH_TO_TRAJS)):
-        if not run_id.startswith(TRAJS_EXP_PREFIX):
-            continue
-        traj_dir = os.path.join(PATH_TO_TRAJS, run_id)
-        eval_dir = os.path.join(PATH_TO_EVAL_DIR, run_id)
-        out_path = f"trajectories_sft/ft_xml_{os.path.basename(eval_dir)}.jsonl"
-        if os.path.exists(out_path):
-            num = len(open(out_path, "r").readlines())
-            print(f"Skipping {out_path} because it already exists ({num} trajs)")
-            continue
-        print("*" * 20)
-        main(
-            traj_dir,
-            eval_dir,
-            style="xml",
-            only_resolved=True,
-            out_dir="trajectories_sft/",
-        )
+    arg_parser = argparse.ArgumentParser(
+        description="Transform SWE-agent trajectories to fine-tuning format"
+    )
+    arg_parser.add_argument(
+        "--traj_dir",
+        type=str,
+        required=True,
+        help="Path to folder containing SWE-agent trajectories",
+    )
+    arg_parser.add_argument(
+        "--eval_dir",
+        type=str,
+        required=True,
+        help="Path to folder containing evaluation results",
+    )
+    arg_parser.add_argument(
+        "--style",
+        type=str,
+        required=False,
+        default="xml",
+        help="Style of the trajectories",
+    )
+    arg_parser.add_argument(
+        "--only_resolved",
+        action="store_true",
+        required=False,
+        help="Only keep trajectories for resolved instances",
+    )
+    arg_parser.add_argument(
+        "--out_dir",
+        type=str,
+        required=False,
+        default=".",
+        help="Path to output directory",
+    )
+    args = arg_parser.parse_args()
+    main(**vars(args))
