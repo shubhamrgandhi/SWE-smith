@@ -119,7 +119,7 @@ def main(
     assert os.path.exists(config_file), f"{config_file} not found"
     assert n_bugs > 0, "n_bugs must be greater than 0"
     configs = yaml.safe_load(open(config_file))
-    assert all(key in configs for key in PROMPT_KEYS + ["criteria", "name"]), (
+    assert all(key in configs for key in PROMPT_KEYS + ["name"]), (
         f"Missing keys in {config_file}"
     )
 
