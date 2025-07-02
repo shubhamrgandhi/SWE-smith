@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 from ghapi.all import GhApi
 from multiprocessing import Lock
 from pathlib import Path
+from swesmith.bug_gen.adapters import get_entities_from_file
 from swebench.harness.constants import FAIL_TO_PASS, KEY_INSTANCE_ID
 from swesmith.constants import (
     KEY_PATCH,
@@ -24,6 +25,7 @@ from swesmith.constants import (
     ORG_NAME_DH,
     ORG_NAME_GH,
     INSTANCE_REF,
+    CodeEntity,
 )
 from unidiff import PatchSet
 
@@ -124,7 +126,7 @@ class RepoProfile(ABC, metaclass=SingletonMeta):
                 stderr=subprocess.STDOUT,
             )
 
-    def clone(self, dest: str | None = None) -> str:
+    def clone(self, dest: str | None = None) -> tuple[str, bool]:
         """Clone repository locally"""
         if not self._mirror_exists():
             raise ValueError(
@@ -144,7 +146,9 @@ class RepoProfile(ABC, metaclass=SingletonMeta):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-        return dest
+            return dest, True
+        else:
+            return dest, False
 
     def create_mirror(self):
         """Create a mirror of this repository at the specified commit."""
@@ -214,7 +218,7 @@ class RepoProfile(ABC, metaclass=SingletonMeta):
 
         if cache_key not in self._test_paths_cache:
             with self._lock:  # Only one process enters this block at a time
-                self.clone()
+                dir_path, cloned = self.clone()
                 test_paths = [
                     Path(os.path.relpath(os.path.join(root, file), self.repo_name))
                     for root, _, files in os.walk(Path(self.repo_name).resolve())
@@ -236,8 +240,8 @@ class RepoProfile(ABC, metaclass=SingletonMeta):
                         )
                     )
                 ]
-                if os.path.exists(self.repo_name):
-                    shutil.rmtree(self.repo_name)
+                if cloned:
+                    shutil.rmtree(dir_path)
                 self._test_paths_cache[cache_key] = test_paths
 
         return self._test_paths_cache[cache_key]
@@ -335,6 +339,56 @@ class RepoProfile(ABC, metaclass=SingletonMeta):
             test_command += f" {' '.join(set(final))}"
 
         return test_command, rv
+
+    def extract_entities(
+        self,
+        dirs_exclude: list[str] = [],
+        dirs_include: list[str] = [],
+        exclude_tests: bool = True,
+        max_entities: int = -1,
+    ) -> list[CodeEntity]:
+        """
+        Extracts entities (functions, classes, etc.) from Python files in a directory.
+        Args:
+            directory_path (str): Path to the directory to scan.
+            exclude_tests (bool): Whether to exclude test files and directories.
+        Returns:
+            List[CodeEntity]: List of CodeEntity objects containing entity information.
+        """
+        dir_path, cloned = self.clone()
+        entities = []
+        for root, _, files in os.walk(dir_path):
+            if exclude_tests and any(
+                [x in root for x in ["/spec", "/tests", "/test", "/testing"]]
+            ):
+                continue
+            for file in files:
+                if exclude_tests and (
+                    file.startswith("test_")
+                    or file.rsplit(".", 1)[0].endswith("_spec")
+                    or file.rsplit(".", 1)[0].endswith("_test")
+                    or file.rsplit(".", 1)[0].endswith("Test")
+                ):
+                    continue
+                if dirs_exclude and any([x in root for x in dirs_exclude]):
+                    continue
+                if dirs_include and not any([x in root for x in dirs_include]):
+                    continue
+
+                file_path = os.path.join(root, file)
+
+                try:
+                    open(file_path, "r", encoding="utf-8").close()
+                except:
+                    continue
+
+                file_ext = Path(file_path).suffix[1:]
+                if file_ext not in get_entities_from_file:
+                    continue
+                get_entities_from_file[file_ext](entities, file_path, max_entities)
+        if cloned:
+            shutil.rmtree(dir_path)
+        return entities
 
 
 ### MARK: Profile Registry ###

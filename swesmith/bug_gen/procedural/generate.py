@@ -16,7 +16,6 @@ from pathlib import Path
 from rich import print
 from swesmith.bug_gen.utils import (
     apply_code_change,
-    extract_entities_from_directory,
     get_bug_directory,
     get_patch,
 )
@@ -129,9 +128,9 @@ def main(
 ):
     random.seed(seed)
     total = 0
-    global_registry.get(repo).clone()
-    print(f"Cloned {repo} repository.")
-    entities = extract_entities_from_directory(repo)
+    rp = global_registry.get(repo)
+    rp.clone()
+    entities = rp.extract_entities()
     print(f"Found {len(entities)} entities in {repo}.")
     for pm in PM_TECHNIQUES:
         print(f"Generating [bold blue]{pm.name}[/bold blue] bugs in {repo}...")

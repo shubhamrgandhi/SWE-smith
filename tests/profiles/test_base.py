@@ -64,7 +64,7 @@ def test_repo_profile_clone():
         patch("os.path.exists", return_value=False) as mock_exists,
         patch("subprocess.run") as mock_run,
     ):
-        result = repo_profile.clone()
+        result, cloned = repo_profile.clone()
         mock_exists.assert_called_once_with(expected_dest)
         mock_run.assert_called_once_with(
             expected_cmd,
@@ -74,6 +74,7 @@ def test_repo_profile_clone():
             stderr=subprocess.DEVNULL,
         )
         assert result == expected_dest
+        assert cloned == True
 
     # Test with custom dest specified
     custom_dest = "some_dir"
@@ -85,7 +86,7 @@ def test_repo_profile_clone():
         patch("os.path.exists", return_value=False) as mock_exists,
         patch("subprocess.run") as mock_run,
     ):
-        result = repo_profile.clone(custom_dest)
+        result, cloned = repo_profile.clone(custom_dest)
         mock_exists.assert_called_once_with(custom_dest)
         mock_run.assert_called_once_with(
             expected_cmd_with_dest,
@@ -95,16 +96,18 @@ def test_repo_profile_clone():
             stderr=subprocess.DEVNULL,
         )
         assert result == custom_dest
+        assert cloned == True
 
     # Test when repo already exists
     with (
         patch("os.path.exists", return_value=True) as mock_exists,
         patch("subprocess.run") as mock_run,
     ):
-        result = repo_profile.clone(custom_dest)
+        result, cloned= repo_profile.clone(custom_dest)
         mock_exists.assert_called_once_with(custom_dest)
         mock_run.assert_not_called()
         assert result == custom_dest
+        assert cloned == False
 
 
 def test_python_log_parser():
@@ -406,13 +409,15 @@ class MockRepoProfile(RepoProfile):
     def log_parser(self, log: str) -> dict[str, str]:
         return {}
 
-    def clone(self, dest: str | None = None) -> str | None:
+    def clone(self, dest: str | None = None) -> tuple[str, bool]:
         """Override clone to use the test directory instead of git clone."""
         dest = self.repo_name if not dest else dest
         if not os.path.exists(dest):
             # Copy the test directory to the expected repo name
             shutil.copytree(self._test_dir, dest)
-        return dest
+            return dest, True
+        else:
+            return dest, False
 
 
 def test_get_cached_test_paths(tmp_path):
@@ -606,3 +611,37 @@ def test_get_test_cmd_non_pytest_eval():
     test_command, test_files = mock_rp.get_test_cmd(instance)
     assert test_command == "go test"
     assert test_files == []
+
+
+def test_extract_entities_simple(tmp_path):
+    # Create a simple Python file with a class and a function
+    py_file = tmp_path / "foo.py"
+    py_file.write_text(
+        """
+class MyClass:
+    def method(self):
+        pass
+
+def my_function(x, y):
+    return x + y
+"""
+    )
+
+    # Create a mock profile pointing to the temp directory
+    mock_rp = MockRepoProfile(str(tmp_path))
+    # Extract entities
+    entities = mock_rp.extract_entities(exclude_tests=False)
+    # Should find MyClass and my_function
+    names = {e.name for e in entities}
+    assert "MyClass" in names
+    assert "my_function" in names
+    print([e.file_path == str(py_file) for e in entities])
+    print([e.file_path for e in entities])
+    print(str(py_file))
+    expected_path = f"{mock_rp.repo_name}/foo.py"
+    assert all([e.file_path == expected_path for e in entities])
+    # All entities should have ext == 'py'
+    assert all(e.ext == "py" for e in entities)
+    # Check that at least one is a class and one is a function
+    assert any(getattr(e, "is_class", False) for e in entities)
+    assert any(getattr(e, "is_function", False) for e in entities)

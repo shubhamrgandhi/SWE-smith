@@ -32,7 +32,6 @@ from litellm.cost_calculator import completion_cost
 from swesmith.bug_gen.llm.utils import PROMPT_KEYS, extract_code_block
 from swesmith.bug_gen.utils import (
     apply_code_change,
-    extract_entities_from_directory,
     get_bug_directory,
     get_patch,
 )
@@ -131,9 +130,10 @@ def main(
 
     # Clone repository, identify valid candidates
     print("Cloning repository...")
-    global_registry.get(repo).clone()
+    rp = global_registry.get(repo)
+    rp.clone()
     print("Extracting candidates...")
-    candidates = extract_entities_from_directory(repo)
+    candidates = rp.extract_entities()
     print(f"{len(candidates)} candidates found in {repo}")
     if not candidates:
         print(f"No candidates found in {repo}.")

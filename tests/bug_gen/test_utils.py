@@ -81,13 +81,6 @@ class Bar:
         self.assertIsInstance(result, str)
         shutil.rmtree(repo)
 
-    def test_extract_entities_from_directory(self):
-        entities = utils.extract_entities_from_directory(
-            self.test_dir, exclude_tests=False
-        )
-        self.assertTrue(any(e.src_code.startswith("def foo") for e in entities))
-        self.assertTrue(any("class Bar" in e.src_code for e in entities))
-
     def test_get_bug_directory(self):
         mock_entity = Mock()
         mock_entity.name = "verify"

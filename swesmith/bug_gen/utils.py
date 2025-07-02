@@ -4,8 +4,6 @@ import subprocess
 
 from dotenv import load_dotenv
 from itertools import combinations
-from pathlib import Path
-from swesmith.bug_gen.adapters import get_entities_from_file
 from swesmith.constants import TEMP_PATCH, BugRewrite, CodeEntity
 
 load_dotenv()
@@ -69,49 +67,6 @@ def apply_patches(repo: str, patch_files: list[str]) -> str | None:
         subprocess.run(["git", "-C", ".", "reset", "--hard"], check=True, **DEVNULL)
         subprocess.run(["git", "clean", "-fdx"], check=True, **DEVNULL)
         os.chdir(cwd)
-
-
-def extract_entities_from_directory(
-    directory_path: str,
-    exclude_tests: bool = True,
-    max_entities: int = -1,
-) -> list[CodeEntity]:
-    """
-    Extracts entities (functions, classes, etc.) from Python files in a directory.
-    Args:
-        directory_path (str): Path to the directory to scan.
-        exclude_tests (bool): Whether to exclude test files and directories.
-    Returns:
-        List[CodeEntity]: List of CodeEntity objects containing entity information.
-    """
-    entities = []
-    for root, _, files in os.walk(directory_path):
-        if exclude_tests and any(
-            [x in root for x in ["/spec", "/tests", "/test", "/testing"]]
-        ):
-            continue
-        for file in files:
-            if exclude_tests and (
-                file.startswith("test_")
-                or file.rsplit(".", 1)[0].endswith("_spec")
-                or file.rsplit(".", 1)[0].endswith("_test")
-                or file.rsplit(".", 1)[0].endswith("Test")
-            ):
-                continue
-
-            file_path = os.path.join(root, file)
-
-            try:
-                open(file_path, "r", encoding="utf-8").close()
-            except:
-                continue
-
-            file_ext = Path(file_path).suffix[1:]
-            if file_ext not in get_entities_from_file:
-                continue
-            get_entities_from_file[file_ext](entities, file_path, max_entities)
-
-    return entities
 
 
 def get_bug_directory(log_dir, candidate: CodeEntity):

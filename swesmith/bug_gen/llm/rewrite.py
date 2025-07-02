@@ -31,7 +31,6 @@ from swesmith.bug_gen.llm.utils import (
 )
 from swesmith.bug_gen.utils import (
     apply_code_change,
-    extract_entities_from_directory,
     get_bug_directory,
     get_patch,
 )
@@ -65,10 +64,11 @@ def main(
     **kwargs,
 ):
     configs = yaml.safe_load(open(config_file))
-    global_registry.get(repo).clone()
+    rp = global_registry.get(repo)
+    rp.clone()
 
     print(f"Extracting entities from {repo}...")
-    candidates = extract_entities_from_directory(repo)
+    candidates = rp.extract_entities()
     if max_bugs:
         random.shuffle(candidates)
         candidates = candidates[:max_bugs]
