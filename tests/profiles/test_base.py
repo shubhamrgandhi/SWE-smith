@@ -103,7 +103,7 @@ def test_repo_profile_clone():
         patch("os.path.exists", return_value=True) as mock_exists,
         patch("subprocess.run") as mock_run,
     ):
-        result, cloned= repo_profile.clone(custom_dest)
+        result, cloned = repo_profile.clone(custom_dest)
         mock_exists.assert_called_once_with(custom_dest)
         mock_run.assert_not_called()
         assert result == custom_dest
