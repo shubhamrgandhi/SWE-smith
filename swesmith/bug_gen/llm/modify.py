@@ -119,7 +119,6 @@ def main(
     repo: str,
     n_workers: int = 1,
     max_bugs: int = -1,
-    **kwargs,
 ):
     # Check arguments
     assert os.path.exists(config_file), f"{config_file} not found"
@@ -152,9 +151,6 @@ def main(
             print(f"Will generate {len(candidates) * n_bugs} bugs (max: {max_bugs})")
 
     print(f"Generating bugs in {repo} using {model}...")
-    if not kwargs.get("yes", False):
-        if input("Proceed with bug generation? (y/n): ").lower() != "y":
-            return
 
     # Set up logging
     log_dir = LOG_DIR_BUG_GEN / repo
@@ -255,6 +251,5 @@ if __name__ == "__main__":
     parser.add_argument(
         "-w", "--n_workers", type=int, help="Number of workers to use", default=1
     )
-    parser.add_argument("-y", "--yes", action="store_true", help="Skip confirmation")
     args = parser.parse_args()
     main(**vars(args))
