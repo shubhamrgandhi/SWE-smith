@@ -78,9 +78,9 @@ def run_evaluation(
 
 
 def main(
-    predictions_path: str,
     run_id: str,
     max_workers: int,
+    predictions_path: str = "gold",
     dataset_path: str = HF_DATASET,
     instance_ids: list | None = None,
     report_only: bool = False,
@@ -209,9 +209,11 @@ def main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Evaluate predications on SWEFT bugs")
     parser.add_argument(
-        "--dataset_path", type=str, help="Path to dataset", default=HF_DATASET
+        "-d", "--dataset_path", type=str, help="Path to dataset", default=HF_DATASET
     )
-    parser.add_argument("--predictions_path", type=str, help="Path to predictions")
+    parser.add_argument(
+        "-p", "--predictions_path", type=str, help="Path to predictions", default="gold"
+    )
     parser.add_argument("--run_id", type=str, help="Unique identifier for this run")
     parser.add_argument(
         "--max_workers", type=int, help="Number of workers to use", default=4
