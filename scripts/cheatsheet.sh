@@ -55,10 +55,10 @@ python -m swesmith.bug_gen.combine.same_module logs/bug_gen/$repo \
     --depth 2
 
 # PR Mirroring
-## NOTE: `path/to/task_candidates.jsonl` is the output of running this
-## the SWE-bench task candidate collection script:
-## https://github.com/SWE-bench/SWE-bench/blob/main/swebench/collect/run_get_tasks_pipeline.sh
-python -m swesmith.bug_gen.mirror.generate path/to/task_candidates.jsonl --model openai/o3-mini
+# 1. Collect task instances
+python -m swesmith.bug_gen.mirror.collect --repos 'Instagram/MonkeyType' --path_prs logs/prs/dumps/ --path_tasks logs/prs/data/
+# 2. Run mirroring on the task candidates
+python -m swesmith.bug_gen.mirror.generate logs/prs/data/MonkeyType-insts.jsonl --model openai/o3-mini
 
 
 ###### MARK: Validate + Evaluate Task Instances ######

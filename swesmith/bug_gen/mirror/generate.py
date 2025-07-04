@@ -1,8 +1,7 @@
 """
 Purpose: Given a pull request, mirror the bug in the current form of the repository.
 
-Usage: python -m swesmith.bug_gen.mirror.main \
-    /path/to/swe-bench-task-instances.json
+Usage: python -m swesmith.bug_gen.mirror.generate logs/prs/data/*-task-instances.jsonl
 """
 
 import argparse
