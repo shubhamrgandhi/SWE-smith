@@ -192,6 +192,13 @@ class Gotests16a93f6e(GoProfile):
     commit: str = "16a93f6eb6519118b1d282e2f233596a98dd7e96"
 
 
+@dataclass
+class Aferof5375068(GoProfile):
+    owner: str = "spf13"
+    repo: str = "afero"
+    commit: str = "f5375068505ede77db8f13bfb1069011fab77063"
+
+
 # Register all Go profiles with the global registry
 for name, obj in list(globals().items()):
     if (

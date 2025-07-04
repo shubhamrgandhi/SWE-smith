@@ -67,6 +67,8 @@ class RepoProfile(ABC, metaclass=SingletonMeta):
     test_exts: list[str] = field(
         default_factory=lambda: [f".{ext}" for ext in SUPPORTED_EXTS]
     )
+    timeout: int = 60  # timeout (sec) for running test suite for a single instance
+    timeout_ref: int = 600  # timeout for running entire test suite
 
     # `min_testing`: If set, then subset of tests (not all) are run for post-bug validation
     # Affects get_test_cmd, get_valid_report
@@ -415,14 +417,14 @@ class Registry(UserDict):
 
     def get_from_inst(self, instance: dict) -> RepoProfile:
         """Get a profile class by a SWE-smith instance dict."""
-        key = instance[KEY_INSTANCE_ID].rsplit(".", 1)[0]
+        key = instance.get("repo", instance[KEY_INSTANCE_ID].rsplit(".", 1)[0])
         return self.get(key)
 
     def keys(self):
         return self.data.keys()
 
     def values(self):
-        return [cls() for cls in self.data.values()]
+        return [cls() for cls in set(self.data.values())]
 
 
 # Global registry instance that can be shared across modules

@@ -29,7 +29,6 @@ from swesmith.constants import (
     LOG_DIR_RUN_VALIDATION,
     TEST_OUTPUT_END,
     TEST_OUTPUT_START,
-    TIMEOUT,
 )
 from swesmith.profiles import global_registry
 
@@ -69,10 +68,10 @@ def run_patch_in_container(
     instance: dict,
     run_id: str,
     log_dir: Path,
+    timeout: int,
     patch: str | None = None,
     commit: str | None = None,
     is_gold: bool = False,
-    timeout: int = TIMEOUT,
 ) -> tuple[Logger, bool] | None:
     """
     Run a patch in a container. The general logical flow is as follows:

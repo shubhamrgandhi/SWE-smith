@@ -265,7 +265,7 @@ def test_registry_values():
     registry.register_profile(TestProfile2)
 
     values = registry.values()
-    assert len(values) == 4  # Because 2 keys per RepoProfile
+    assert len(values) == 2
     assert all(isinstance(v, RepoProfile) for v in values)
     assert any(v.owner == "test1" for v in values)
     assert any(v.owner == "test2" for v in values)

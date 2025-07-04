@@ -35,10 +35,9 @@ from swesmith.constants import (
     LOG_DIR_ISSUE_GEN,
     TEST_OUTPUT_END,
     TEST_OUTPUT_START,
-    TIMEOUT,
 )
 from swesmith.issue_gen.utils import get_test_function
-from swesmith.profiles import global_registry
+from swesmith.profiles import RepoProfile, global_registry
 from swesmith.profiles.python import PythonProfile
 from tqdm.auto import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
@@ -62,18 +61,16 @@ TEST_INFO = """**Test Source Code**
 """
 
 
-def get_verbose_test_cmd(instance: dict, test_idx: int | None = None):
+def get_verbose_test_cmd(instance: dict, rp: RepoProfile, test_idx: int | None = None):
     """
     Get test command that runs a random F2P test verbosely.
     """
-    test_cmd = global_registry.get(instance["repo"].split("/")[-1]).test_cmd
-
+    test_cmd = rp.test_cmd
     # TODO: This should probably be changed, or incorporated into the profile
     if test_cmd == PythonProfile.test_cmd:
         test_cmd = test_cmd.replace(
             PythonProfile.test_cmd, "pytest -v --showlocals --tb=long --color=no"
         )
-
     f2p_test = (
         random.choice(instance[FAIL_TO_PASS])
         if test_idx is None
@@ -83,7 +80,7 @@ def get_verbose_test_cmd(instance: dict, test_idx: int | None = None):
     return test_cmd
 
 
-def run_command_in_container(instance: dict, command: str):
+def run_command_in_container(instance: dict, command: str, rp: RepoProfile):
     """
     Run a command in a docker container.
     """
@@ -132,7 +129,7 @@ def run_command_in_container(instance: dict, command: str):
         user=DOCKER_USER,
     )
     test_output, _, _ = exec_run_with_timeout(
-        container, "/bin/bash /eval.sh", timeout=TIMEOUT
+        container, "/bin/bash /eval.sh", timeout=rp.timeout
     )
     start_idx = test_output.find(TEST_OUTPUT_START) + len(TEST_OUTPUT_START)
     end_idx = test_output.find(TEST_OUTPUT_END)
@@ -173,7 +170,8 @@ def _process_instance(instance: dict, config_file: str | None, model: str | None
             return {"completed": 1, "timed_out": 0, "failed": 0}
     else:
         test_idx = random.randint(0, len(instance[FAIL_TO_PASS]) - 1)
-        cmd = get_verbose_test_cmd(instance, test_idx)
+        rp = global_registry.get_from_inst(instance)
+        cmd = get_verbose_test_cmd(instance, rp, test_idx)
         test_output = run_command_in_container(instance, cmd)
         test_func = get_test_function(instance, test_idx)
         test_src = test_func["test_src"]

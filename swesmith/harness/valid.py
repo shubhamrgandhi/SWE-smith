@@ -26,7 +26,6 @@ from swesmith.constants import (
     LOG_TEST_OUTPUT_PRE_GOLD,
     REF_SUFFIX,
     LOG_DIR_RUN_VALIDATION,
-    TIMEOUT,
 )
 from swesmith.harness.grading import get_valid_report
 from swesmith.harness.utils import run_patch_in_container
@@ -53,35 +52,36 @@ def print_report(log_dir: Path) -> None:
     print(f"- Other: {other}")
 
 
-def run_validation(
-    instance: dict, timeout: int = TIMEOUT, run_min_pregold: bool = False
-) -> None:
+def run_validation(instance: dict) -> None:
     """
     Run per-instance validation. Steps are generally:
     1. Run the patch on the instance.
     2. Get the report from the test output.
     """
     instance_id = instance[KEY_INSTANCE_ID]
+    rp = global_registry.get_from_inst(instance)
     valid_folder = LOG_DIR_RUN_VALIDATION / instance["repo"]
     val_postgold_path = (
         valid_folder / f"{instance['repo']}{REF_SUFFIX}" / LOG_TEST_OUTPUT
     )
     report_path = valid_folder / instance_id / LOG_REPORT
 
-    if run_min_pregold:
+    if rp.min_pregold:
         ref_inst_id = f"{instance[KEY_INSTANCE_ID]}{REF_SUFFIX}"
         logger, timed_out = run_patch_in_container(
             {**instance, KEY_INSTANCE_ID: ref_inst_id},
             instance["repo"],
             LOG_DIR_RUN_VALIDATION,
-            timeout=timeout,
+            rp.timeout,
         )
         close_logger(logger)
         if timed_out:
             logger.info(f"Timed out (pre-gold) for {instance_id}.")
             report_path.parent.mkdir(parents=True, exist_ok=True)
             with open(report_path, "w") as f:
-                f.write(json.dumps({KEY_TIMED_OUT: True, "timeout": timeout}, indent=4))
+                f.write(
+                    json.dumps({KEY_TIMED_OUT: True, "timeout": rp.timeout}, indent=4)
+                )
             shutil.rmtree(valid_folder / ref_inst_id)
             return
 
@@ -98,14 +98,14 @@ def run_validation(
         instance,
         instance["repo"],
         LOG_DIR_RUN_VALIDATION,
+        rp.timeout,
         patch=instance[KEY_PATCH],
-        timeout=timeout,
     )
 
     if timed_out:
         logger.info(f"Timed out for {instance_id}.")
         with open(report_path, "w") as f:
-            f.write(json.dumps({KEY_TIMED_OUT: True, "timeout": timeout}, indent=4))
+            f.write(json.dumps({KEY_TIMED_OUT: True, "timeout": rp.timeout}, indent=4))
         close_logger(logger)
         return
 
@@ -139,8 +139,6 @@ def run_validation(
 def main(
     bug_patches: str,
     max_workers: int,
-    timeout: int,
-    timeout_ref: int,
     redo_existing: bool = False,
 ) -> None:
     # Bug patch should be a dict that looks like this:
@@ -190,20 +188,18 @@ def main(
 
     # Run validation
     payloads = list()
-    if timeout_ref is None:
-        timeout_ref = timeout
     for repo, bug_patches in repo_to_bug_patches.items():
-        p = global_registry.get(repo)
-        ref_inst = f"{p.repo_name}{REF_SUFFIX}"
+        rp = global_registry.get(repo)
+        ref_inst = f"{rp.repo_name}{REF_SUFFIX}"
         ref_dir = LOG_DIR_RUN_VALIDATION / repo / ref_inst
-        if not p.min_pregold and not os.path.exists(ref_dir):
+        if not rp.min_pregold and not os.path.exists(ref_dir):
             # Run pytest for each repo/commit to get pre-gold behavior.
             print(f"Running pre-gold for {repo}...")
             logger, timed_out = run_patch_in_container(
                 {KEY_INSTANCE_ID: ref_inst},
                 repo,
                 LOG_DIR_RUN_VALIDATION,
-                timeout=timeout_ref,
+                rp.timeout_ref,
             )
             close_logger(logger)
             if timed_out:
@@ -216,7 +212,7 @@ def main(
 
         # Add payloads
         for bug_patch in bug_patches:
-            payloads.append((bug_patch, timeout, p.min_pregold))
+            payloads.append((bug_patch,))
 
     run_threadpool(run_validation, payloads, max_workers)
     print("All instances run.")
@@ -234,15 +230,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-w", "--max_workers", type=int, default=4, help="Number of workers to use."
-    )
-    parser.add_argument(
-        "--timeout", type=int, default=TIMEOUT, help="Timeout for each run."
-    )
-    parser.add_argument(
-        "--timeout_ref",
-        type=int,
-        default=None,
-        help="Timeout for each run of the reference.",
     )
     parser.add_argument(
         "--redo_existing",

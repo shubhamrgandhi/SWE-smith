@@ -23,9 +23,10 @@ from swebench.harness.constants import (
 )
 from swebench.harness.docker_build import close_logger
 from swebench.harness.utils import run_threadpool
-from swesmith.constants import HF_DATASET, KEY_PATCH, KEY_TIMED_OUT, TIMEOUT
+from swesmith.constants import HF_DATASET, KEY_PATCH, KEY_TIMED_OUT
 from swesmith.harness.grading import get_eval_report
 from swesmith.harness.utils import run_patch_in_container
+from swesmith.profiles import global_registry
 
 
 def run_evaluation(
@@ -33,20 +34,20 @@ def run_evaluation(
     instance: dict,
     run_id: str,
     is_gold: bool = False,
-    timeout: int = TIMEOUT,
 ) -> None:
     """
     Run per-prediction evaluation
     """
     instance_id = pred[KEY_INSTANCE_ID]
+    rp = global_registry.get_from_inst(instance)
     logger, timed_out = run_patch_in_container(  # type: ignore
         instance,
         run_id,
         RUN_EVALUATION_LOG_DIR,
+        rp.timeout,
         patch=pred[KEY_PREDICTION],
-        commit=instance["base_commit"],
+        commit=instance_id,  # NOTE: could use `base_commit`
         is_gold=is_gold,
-        timeout=timeout,
     )
 
     eval_folder = RUN_EVALUATION_LOG_DIR / run_id
@@ -56,7 +57,7 @@ def run_evaluation(
     if timed_out:
         logger.info(f"Timed out for {instance_id}.")
         with open(report_path, "w") as f:
-            f.write(json.dumps({KEY_TIMED_OUT: True, "timeout": timeout}, indent=4))
+            f.write(json.dumps({KEY_TIMED_OUT: True, "timeout": rp.timeout}, indent=4))
         close_logger(logger)
         return
 
@@ -84,7 +85,6 @@ def main(
     dataset_path: str = HF_DATASET,
     instance_ids: list | None = None,
     report_only: bool = False,
-    timeout: int = TIMEOUT,
     redo_existing: bool = False,
 ):
     """
@@ -163,7 +163,6 @@ def main(
                 instance,
                 run_id,
                 is_gold,
-                timeout,
             )
         )
 
@@ -216,10 +215,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--run_id", type=str, help="Unique identifier for this run")
     parser.add_argument(
-        "--max_workers", type=int, help="Number of workers to use", default=4
-    )
-    parser.add_argument(
-        "--timeout", type=int, help="Timeout for each evaluation", default=TIMEOUT * 4
+        "-w", "--max_workers", type=int, help="Number of workers to use", default=4
     )
     parser.add_argument(
         "--redo_existing",
@@ -227,7 +223,7 @@ if __name__ == "__main__":
         help="Redo completed evaluation instances",
     )
     parser.add_argument(
-        "--instance_ids", type=str, help="Instance IDs to evaluate", nargs="+"
+        "-i", "--instance_ids", type=str, help="Instance IDs to evaluate", nargs="+"
     )
     parser.add_argument(
         "--report_only", action="store_true", help="Regenerate reports only"
